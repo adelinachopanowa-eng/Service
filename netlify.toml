@@ -1,0 +1,19 @@
+# Netlify configuration for Next.js
+#
+# Required environment variables (set in Netlify dashboard:
+#   Site settings -> Build & deploy -> Environment -> Environment variables):
+#
+#   NEXT_PUBLIC_SUPABASE_URL       (e.g. https://xxxxx.supabase.co)
+#   NEXT_PUBLIC_SUPABASE_ANON_KEY  (publishable or anon key)
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+  # Skip Next.js telemetry during build
+  NEXT_TELEMETRY_DISABLED = "1"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

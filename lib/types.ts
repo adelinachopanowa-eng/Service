@@ -1,6 +1,6 @@
 export type MachineType = "truck" | "industrial";
 export type ReadingUnit = "km" | "hours";
-export type ServiceType = "repair" | "maintenance";
+export type ServiceType = "repair" | "maintenance" | "parts";
 
 export interface Machine {
   id: string;
@@ -31,7 +31,7 @@ export interface MaintenanceRecord {
   next_service_reading: number | null;
   next_service_date: string | null;
   notes: string | null;
-  invoice_photo_path: string | null;
+  invoice_photo_paths: string[];
   created_at: string;
 }
 

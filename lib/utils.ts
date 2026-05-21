@@ -35,6 +35,18 @@ export function unitLabel(unit: "km" | "hours"): string {
   return unit === "km" ? "Километри" : "Моточасове";
 }
 
-export function serviceTypeLabel(type: "repair" | "maintenance"): string {
-  return type === "repair" ? "Ремонт" : "Поддръжка";
+export function serviceTypeLabel(
+  type: "repair" | "maintenance" | "parts"
+): string {
+  if (type === "repair") return "Ремонт";
+  if (type === "parts") return "Части";
+  return "Поддръжка";
+}
+
+export function serviceTypeBadgeClass(
+  type: "repair" | "maintenance" | "parts"
+): string {
+  if (type === "repair") return "badge-red";
+  if (type === "parts") return "badge-yellow";
+  return "badge-green";
 }

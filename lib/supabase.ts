@@ -22,3 +22,15 @@ export function invoicePhotoUrl(path: string | null | undefined): string | null 
   const { data } = supabase.storage.from(INVOICE_BUCKET).getPublicUrl(path);
   return data?.publicUrl ?? null;
 }
+
+export function invoicePhotoUrls(
+  paths: string[] | null | undefined
+): { path: string; url: string }[] {
+  if (!paths || paths.length === 0) return [];
+  return paths
+    .map((path) => {
+      const url = invoicePhotoUrl(path);
+      return url ? { path, url } : null;
+    })
+    .filter((p): p is { path: string; url: string } => p !== null);
+}

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { supabase, invoicePhotoUrl } from "@/lib/supabase";
+import { supabase, invoicePhotoUrls } from "@/lib/supabase";
 import { DeleteButton } from "@/components/DeleteButton";
 import {
   deleteMachine,
@@ -17,6 +17,7 @@ import {
   formatMoney,
   formatReading,
   machineTypeLabel,
+  serviceTypeBadgeClass,
   serviceTypeLabel,
   unitLabel,
 } from "@/lib/utils";
@@ -244,13 +245,7 @@ export default async function MachineDetailPage({
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <span
-                          className={
-                            r.service_type === "repair"
-                              ? "badge-red"
-                              : "badge-green"
-                          }
-                        >
+                        <span className={serviceTypeBadgeClass(r.service_type)}>
                           {serviceTypeLabel(r.service_type)}
                         </span>
                         <span className="font-bold text-text">{r.title}</span>
@@ -269,23 +264,40 @@ export default async function MachineDetailPage({
                         </p>
                       )}
                       {(() => {
-                        const photoUrl = invoicePhotoUrl(r.invoice_photo_path);
-                        if (!photoUrl) return null;
+                        const photos = invoicePhotoUrls(r.invoice_photo_paths);
+                        if (photos.length === 0) return null;
                         return (
-                          <a
-                            href={photoUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-2 block overflow-hidden rounded-lg border border-bordergray bg-cream"
+                          <div
+                            className={
+                              "mt-2 grid gap-2 " +
+                              (photos.length === 1
+                                ? "grid-cols-1"
+                                : "grid-cols-2 sm:grid-cols-3")
+                            }
                           >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={photoUrl}
-                              alt="Снимка на фактурата"
-                              className="block max-h-56 w-full object-contain"
-                              loading="lazy"
-                            />
-                          </a>
+                            {photos.map((photo) => (
+                              <a
+                                key={photo.path}
+                                href={photo.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block overflow-hidden rounded-lg border border-bordergray bg-cream"
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={photo.url}
+                                  alt="Снимка на фактурата"
+                                  className={
+                                    "block w-full object-cover " +
+                                    (photos.length === 1
+                                      ? "max-h-72 object-contain"
+                                      : "aspect-square")
+                                  }
+                                  loading="lazy"
+                                />
+                              </a>
+                            ))}
+                          </div>
                         );
                       })()}
                       {(r.next_service_reading != null ||

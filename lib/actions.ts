@@ -4,37 +4,50 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { supabase, INVOICE_BUCKET } from "./supabase";
 
-const MAX_INVOICE_SIZE = 8 * 1024 * 1024; // 8 MB
+const MAX_INVOICE_SIZE = 8 * 1024 * 1024; // 8 MB per photo
 
-async function uploadInvoicePhoto(
+async function uploadInvoicePhotos(
   machineId: string,
   formData: FormData
-): Promise<string | null> {
-  const file = formData.get("invoice_photo");
-  if (!(file instanceof File) || file.size === 0) return null;
-  if (file.size > MAX_INVOICE_SIZE) {
-    throw new Error("Снимката е твърде голяма (макс. 8 MB)");
+): Promise<string[]> {
+  const files = formData
+    .getAll("invoice_photos")
+    .filter((f): f is File => f instanceof File && f.size > 0);
+
+  if (files.length === 0) return [];
+
+  const uploadedPaths: string[] = [];
+  for (const file of files) {
+    if (file.size > MAX_INVOICE_SIZE) {
+      await removeInvoicePhotos(uploadedPaths);
+      throw new Error(`Снимката "${file.name}" е твърде голяма (макс. 8 MB)`);
+    }
+    if (!file.type.startsWith("image/")) {
+      await removeInvoicePhotos(uploadedPaths);
+      throw new Error(`Файлът "${file.name}" не е снимка`);
+    }
+    const safeExt = (file.name.split(".").pop() || "jpg")
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "")
+      .slice(0, 5);
+    const path = `${machineId}/${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2, 8)}.${safeExt || "jpg"}`;
+    const { error } = await supabase.storage
+      .from(INVOICE_BUCKET)
+      .upload(path, file, { contentType: file.type, upsert: false });
+    if (error) {
+      await removeInvoicePhotos(uploadedPaths);
+      throw new Error(`Качване на снимка: ${error.message}`);
+    }
+    uploadedPaths.push(path);
   }
-  if (!file.type.startsWith("image/")) {
-    throw new Error("Прикаченият файл трябва да е снимка");
-  }
-  const safeExt = (file.name.split(".").pop() || "jpg")
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, "")
-    .slice(0, 5);
-  const path = `${machineId}/${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2, 8)}.${safeExt || "jpg"}`;
-  const { error } = await supabase.storage
-    .from(INVOICE_BUCKET)
-    .upload(path, file, { contentType: file.type, upsert: false });
-  if (error) throw new Error(`Качване на снимка: ${error.message}`);
-  return path;
+  return uploadedPaths;
 }
 
-async function removeInvoicePhoto(path: string | null | undefined) {
-  if (!path) return;
-  await supabase.storage.from(INVOICE_BUCKET).remove([path]);
+async function removeInvoicePhotos(paths: string[] | null | undefined) {
+  if (!paths || paths.length === 0) return;
+  await supabase.storage.from(INVOICE_BUCKET).remove(paths);
 }
 
 function str(form: FormData, key: string): string {
@@ -132,7 +145,7 @@ export async function createRecord(machineId: string, formData: FormData) {
   if (!str(formData, "service_date"))
     throw new Error("Датата е задължителна");
 
-  const invoicePath = await uploadInvoicePhoto(machineId, formData);
+  const invoicePaths = await uploadInvoicePhotos(machineId, formData);
 
   const payload = {
     machine_id: machineId,
@@ -146,12 +159,12 @@ export async function createRecord(machineId: string, formData: FormData) {
     next_service_reading: numOrNull(formData, "next_service_reading"),
     next_service_date: strOrNull(formData, "next_service_date"),
     notes: strOrNull(formData, "notes"),
-    invoice_photo_path: invoicePath,
+    invoice_photo_paths: invoicePaths,
   };
 
   const { error } = await supabase.from("tm_maintenance_records").insert(payload);
   if (error) {
-    await removeInvoicePhoto(invoicePath);
+    await removeInvoicePhotos(invoicePaths);
     throw new Error(error.message);
   }
 
@@ -163,7 +176,7 @@ export async function createRecord(machineId: string, formData: FormData) {
 export async function deleteRecord(machineId: string, recordId: string) {
   const { data: existing } = await supabase
     .from("tm_maintenance_records")
-    .select("invoice_photo_path")
+    .select("invoice_photo_paths")
     .eq("id", recordId)
     .maybeSingle();
 
@@ -173,7 +186,7 @@ export async function deleteRecord(machineId: string, recordId: string) {
     .eq("id", recordId);
   if (error) throw new Error(error.message);
 
-  await removeInvoicePhoto(existing?.invoice_photo_path);
+  await removeInvoicePhotos(existing?.invoice_photo_paths);
 
   revalidatePath(`/machines/${machineId}`);
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Machine } from "@/lib/types";
 
 interface Props {
@@ -8,34 +8,67 @@ interface Props {
   action: (formData: FormData) => void | Promise<void>;
 }
 
+interface PhotoItem {
+  id: string;
+  file: File;
+  preview: string;
+}
+
 export function RecordForm({ machine, action }: Props) {
   const unitText = machine.reading_unit === "km" ? "км" : "мч";
   const today = new Date().toISOString().slice(0, 10);
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [preview, setPreview] = useState<string | null>(null);
-  const [fileName, setFileName] = useState<string | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const [photos, setPhotos] = useState<PhotoItem[]>([]);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) {
-      setPreview(null);
-      setFileName(null);
-      return;
-    }
-    setFileName(file.name);
-    const reader = new FileReader();
-    reader.onload = () => setPreview(reader.result as string);
-    reader.readAsDataURL(file);
+  useEffect(() => {
+    return () => {
+      photos.forEach((p) => URL.revokeObjectURL(p.preview));
+    };
+  }, [photos]);
+
+  const addFiles = (fileList: FileList | null) => {
+    if (!fileList) return;
+    const newItems: PhotoItem[] = Array.from(fileList).map((file) => ({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      file,
+      preview: URL.createObjectURL(file),
+    }));
+    setPhotos((prev) => [...prev, ...newItems]);
   };
 
-  const clearFile = () => {
-    if (fileRef.current) fileRef.current.value = "";
-    setPreview(null);
-    setFileName(null);
+  const removePhoto = (id: string) => {
+    setPhotos((prev) => {
+      const target = prev.find((p) => p.id === id);
+      if (target) URL.revokeObjectURL(target.preview);
+      return prev.filter((p) => p.id !== id);
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (pending) return;
+    const formData = new FormData(e.currentTarget);
+    formData.delete("invoice_photos");
+    for (const p of photos) {
+      formData.append("invoice_photos", p.file, p.file.name);
+    }
+    setPending(true);
+    setError(null);
+    try {
+      await action(formData);
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Възникна неочаквана грешка.";
+      setError(msg);
+      setPending(false);
+    }
   };
 
   return (
-    <form action={action} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="card">
         <h3 className="card-title">Информация за работата</h3>
         <div className="field-grid">
@@ -51,10 +84,15 @@ export function RecordForm({ machine, action }: Props) {
           </div>
 
           <div>
-            <label className="label">Тип работа *</label>
-            <select name="service_type" defaultValue="maintenance" className="select">
+            <label className="label">Тип *</label>
+            <select
+              name="service_type"
+              defaultValue="maintenance"
+              className="select"
+            >
               <option value="maintenance">Поддръжка</option>
               <option value="repair">Ремонт</option>
+              <option value="parts">Части</option>
             </select>
           </div>
 
@@ -73,7 +111,7 @@ export function RecordForm({ machine, action }: Props) {
             <textarea
               name="description"
               rows={3}
-              placeholder="Подробно описание на извършените дейности..."
+              placeholder="Подробно описание на извършените дейности или закупените части..."
               className="textarea"
             />
           </div>
@@ -105,10 +143,10 @@ export function RecordForm({ machine, action }: Props) {
           </div>
 
           <div className="sm:col-span-2">
-            <label className="label">Извършил</label>
+            <label className="label">Извършил / Доставчик</label>
             <input
               name="performed_by"
-              placeholder="Сервиз или техник"
+              placeholder="Сервиз, техник или магазин"
               className="input"
             />
           </div>
@@ -138,58 +176,96 @@ export function RecordForm({ machine, action }: Props) {
       </div>
 
       <div className="card">
-        <h3 className="card-title">Снимка на фактурата</h3>
+        <h3 className="card-title">
+          Снимки на фактурата
+          {photos.length > 0 && ` (${photos.length})`}
+        </h3>
+
         <input
-          ref={fileRef}
+          ref={cameraInputRef}
           type="file"
-          name="invoice_photo"
           accept="image/*"
           capture="environment"
-          onChange={onFileChange}
+          onChange={(e) => {
+            addFiles(e.target.files);
+            e.target.value = "";
+          }}
           className="hidden"
-          id="invoice_photo_input"
         />
-        {preview ? (
-          <div className="space-y-3">
-            <div className="overflow-hidden rounded-card border border-bordergray bg-cream">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={preview}
-                alt="Преглед на фактурата"
-                className="block max-h-72 w-full object-contain"
-              />
-            </div>
-            <div className="flex items-center justify-between gap-2">
-              <span className="truncate text-xs text-soft">{fileName}</span>
-              <button
-                type="button"
-                onClick={clearFile}
-                className="btn-outline btn-sm"
+        <input
+          ref={galleryInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={(e) => {
+            addFiles(e.target.files);
+            e.target.value = "";
+          }}
+          className="hidden"
+        />
+
+        {photos.length > 0 && (
+          <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {photos.map((p) => (
+              <div
+                key={p.id}
+                className="group relative overflow-hidden rounded-lg border border-bordergray bg-cream"
               >
-                Премахни
-              </button>
-            </div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={p.preview}
+                  alt={p.file.name}
+                  className="block aspect-square w-full object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => removePhoto(p.id)}
+                  className="absolute right-1.5 top-1.5 grid h-7 w-7 place-items-center rounded-full
+                    bg-black/60 text-white shadow-md active:bg-black/80"
+                  aria-label="Премахни"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
           </div>
-        ) : (
-          <label
-            htmlFor="invoice_photo_input"
-            className="flex min-h-[120px] cursor-pointer flex-col items-center justify-center gap-2
-              rounded-card border-2 border-dashed border-bordergray bg-cream
-              p-5 text-center text-sm text-soft active:bg-cream/60"
+        )}
+
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => cameraInputRef.current?.click()}
+            className="btn-outline"
           >
-            <span className="text-2xl">📷</span>
-            <span className="font-bold text-text">
-              Натисни, за да добавиш снимка
-            </span>
-            <span className="text-xs">
-              Снимай или избери от галерията (до 8 MB)
-            </span>
-          </label>
+            📷 Снимай
+          </button>
+          <button
+            type="button"
+            onClick={() => galleryInputRef.current?.click()}
+            className="btn-outline"
+          >
+            🖼️ От галерия
+          </button>
+        </div>
+        {photos.length === 0 && (
+          <p className="mt-2 text-center text-xs text-soft">
+            Може да добавиш няколко снимки (до 8 MB всяка).
+          </p>
         )}
       </div>
 
-      <button type="submit" className="btn-primary btn-full">
-        Запиши работата
+      {error && (
+        <div className="rounded-lg border border-[#f0a0a0] bg-[#fce4e4] px-4 py-3 text-sm text-[#8b0000]">
+          {error}
+        </div>
+      )}
+
+      <button
+        type="submit"
+        disabled={pending}
+        className="btn-primary btn-full disabled:opacity-60"
+      >
+        {pending ? "Запис..." : "Запиши работата"}
       </button>
     </form>
   );

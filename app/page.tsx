@@ -9,6 +9,7 @@ import {
   formatDate,
   formatReading,
   machineTypeLabel,
+  serviceTypeBadgeClass,
   serviceTypeLabel,
 } from "@/lib/utils";
 
@@ -190,13 +191,7 @@ export default async function DashboardPage() {
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
-                        <span
-                          className={
-                            r.service_type === "repair"
-                              ? "badge-red"
-                              : "badge-green"
-                          }
-                        >
+                        <span className={serviceTypeBadgeClass(r.service_type)}>
                           {serviceTypeLabel(r.service_type)}
                         </span>
                         <span className="truncate font-bold text-text">

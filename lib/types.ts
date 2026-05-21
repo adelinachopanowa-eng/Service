@@ -31,6 +31,7 @@ export interface MaintenanceRecord {
   next_service_reading: number | null;
   next_service_date: string | null;
   notes: string | null;
+  invoice_photo_path: string | null;
   created_at: string;
 }
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useState } from "react";
 import type { Machine } from "@/lib/types";
 
 interface Props {
@@ -10,6 +11,28 @@ interface Props {
 export function RecordForm({ machine, action }: Props) {
   const unitText = machine.reading_unit === "km" ? "км" : "мч";
   const today = new Date().toISOString().slice(0, 10);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      setPreview(null);
+      setFileName(null);
+      return;
+    }
+    setFileName(file.name);
+    const reader = new FileReader();
+    reader.onload = () => setPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const clearFile = () => {
+    if (fileRef.current) fileRef.current.value = "";
+    setPreview(null);
+    setFileName(null);
+  };
 
   return (
     <form action={action} className="space-y-4">
@@ -112,6 +135,57 @@ export function RecordForm({ machine, action }: Props) {
             <textarea name="notes" rows={2} className="textarea" />
           </div>
         </div>
+      </div>
+
+      <div className="card">
+        <h3 className="card-title">Снимка на фактурата</h3>
+        <input
+          ref={fileRef}
+          type="file"
+          name="invoice_photo"
+          accept="image/*"
+          capture="environment"
+          onChange={onFileChange}
+          className="hidden"
+          id="invoice_photo_input"
+        />
+        {preview ? (
+          <div className="space-y-3">
+            <div className="overflow-hidden rounded-card border border-bordergray bg-cream">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={preview}
+                alt="Преглед на фактурата"
+                className="block max-h-72 w-full object-contain"
+              />
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="truncate text-xs text-soft">{fileName}</span>
+              <button
+                type="button"
+                onClick={clearFile}
+                className="btn-outline btn-sm"
+              >
+                Премахни
+              </button>
+            </div>
+          </div>
+        ) : (
+          <label
+            htmlFor="invoice_photo_input"
+            className="flex min-h-[120px] cursor-pointer flex-col items-center justify-center gap-2
+              rounded-card border-2 border-dashed border-bordergray bg-cream
+              p-5 text-center text-sm text-soft active:bg-cream/60"
+          >
+            <span className="text-2xl">📷</span>
+            <span className="font-bold text-text">
+              Натисни, за да добавиш снимка
+            </span>
+            <span className="text-xs">
+              Снимай или избери от галерията (до 8 MB)
+            </span>
+          </label>
+        )}
       </div>
 
       <button type="submit" className="btn-primary btn-full">

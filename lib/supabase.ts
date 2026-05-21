@@ -14,3 +14,11 @@ const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || DEFAULT_ANON_KEY;
 export const supabase = createClient(url, anonKey, {
   auth: { persistSession: false },
 });
+
+export const INVOICE_BUCKET = "tm-invoices";
+
+export function invoicePhotoUrl(path: string | null | undefined): string | null {
+  if (!path) return null;
+  const { data } = supabase.storage.from(INVOICE_BUCKET).getPublicUrl(path);
+  return data?.publicUrl ?? null;
+}

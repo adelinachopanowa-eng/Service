@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { supabase, invoicePhotoUrl } from "@/lib/supabase";
 import { DeleteButton } from "@/components/DeleteButton";
 import {
   deleteMachine,
@@ -268,6 +268,26 @@ export default async function MachineDetailPage({
                           {r.description}
                         </p>
                       )}
+                      {(() => {
+                        const photoUrl = invoicePhotoUrl(r.invoice_photo_path);
+                        if (!photoUrl) return null;
+                        return (
+                          <a
+                            href={photoUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-2 block overflow-hidden rounded-lg border border-bordergray bg-cream"
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={photoUrl}
+                              alt="Снимка на фактурата"
+                              className="block max-h-56 w-full object-contain"
+                              loading="lazy"
+                            />
+                          </a>
+                        );
+                      })()}
                       {(r.next_service_reading != null ||
                         r.next_service_date) && (
                         <div className="mt-2 rounded bg-cream px-2 py-1 text-xs text-soft">

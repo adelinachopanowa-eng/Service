@@ -12,6 +12,7 @@ const nextConfig: NextConfig = {
         "*.netlify.app",
         "*.netlify.com",
       ],
+      bodySizeLimit: "10mb",
     },
   },
 };

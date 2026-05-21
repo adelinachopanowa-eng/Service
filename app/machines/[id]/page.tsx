@@ -59,23 +59,28 @@ export default async function MachineDetailPage({
   const deleteMachineBound = deleteMachine.bind(null, machine.id);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       <div>
         <Link
           href="/machines"
-          className="text-sm text-brand-600 hover:underline"
+          className="text-xs font-bold text-brand active:text-brand-light"
         >
           ← Машини
         </Link>
-        <div className="mt-1 flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">{machine.name}</h1>
-            <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-600">
+      </div>
+
+      <div className="card">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h2 className="text-lg font-extrabold leading-tight text-text">
+              {machine.name}
+            </h2>
+            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-soft">
               <span
                 className={
                   machine.machine_type === "truck"
-                    ? "badge-blue"
-                    : "badge-amber"
+                    ? "badge-green"
+                    : "badge-yellow"
                 }
               >
                 {machineTypeLabel(machine.machine_type)}
@@ -91,59 +96,62 @@ export default async function MachineDetailPage({
               )}
             </div>
           </div>
-          <div className="flex gap-2">
-            <Link
-              href={`/machines/${machine.id}/edit`}
-              className="btn-secondary"
-            >
-              Редактирай
-            </Link>
-            <DeleteButton
-              action={deleteMachineBound}
-              confirmMessage={`Да изтрия ли машината "${machine.name}" и всичките ѝ записи?`}
-            />
-          </div>
         </div>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Stat label="Текущо показание">
-          {formatReading(Number(machine.current_reading), machine.reading_unit)}
-        </Stat>
-        <Stat label="Мерна единица">{unitLabel(machine.reading_unit)}</Stat>
-        <Stat label="Общи разходи">{formatMoney(totalCost)}</Stat>
-      </div>
-
-      {machine.notes && (
-        <div className="card p-5">
-          <div className="text-xs uppercase tracking-wide text-slate-500">
-            Бележки
-          </div>
-          <div className="mt-1 whitespace-pre-wrap text-sm text-slate-800">
-            {machine.notes}
-          </div>
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <Stat label="Показание">
+            {formatReading(
+              Number(machine.current_reading),
+              machine.reading_unit
+            )}
+          </Stat>
+          <Stat label="Единица">{unitLabel(machine.reading_unit)}</Stat>
+          <Stat label="Разходи">{formatMoney(totalCost)}</Stat>
         </div>
-      )}
-
-      <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-slate-900">
-            Планове за периодична поддръжка
-          </h2>
+        {machine.notes && (
+          <div className="mt-4 rounded-lg bg-cream p-3 text-sm text-text">
+            <div className="mb-1 stat-label">Бележки</div>
+            <div className="whitespace-pre-wrap">{machine.notes}</div>
+          </div>
+        )}
+        <div className="mt-4 grid grid-cols-2 gap-2">
           <Link
-            href={`/machines/${machine.id}/schedules/new`}
-            className="btn-secondary"
+            href={`/machines/${machine.id}/edit`}
+            className="btn-outline btn-sm"
           >
-            + Нов план
+            Редактирай
           </Link>
+          <DeleteButton
+            action={deleteMachineBound}
+            confirmMessage={`Да изтрия ли машината "${machine.name}" и всичките ѝ записи?`}
+            label="Изтрий машината"
+          />
         </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <Link
+          href={`/machines/${machine.id}/records/new`}
+          className="btn-primary"
+        >
+          + Нов запис
+        </Link>
+        <Link
+          href={`/machines/${machine.id}/schedules/new`}
+          className="btn-yellow"
+        >
+          + Нов план
+        </Link>
+      </div>
+
+      <section className="card">
+        <h3 className="card-title">Планове за периодична поддръжка</h3>
         {schedules.length === 0 ? (
-          <div className="card p-5 text-sm text-slate-500">
+          <p className="text-sm text-soft">
             Няма добавени планове. Добавете план, за да получавате напомняния
             за следваща поддръжка.
-          </div>
+          </p>
         ) : (
-          <div className="card divide-y divide-slate-100">
+          <ul className="space-y-2">
             {schedules.map((s) => {
               const lastReading = s.last_done_reading ?? 0;
               const dueAt = lastReading + Number(s.interval_value);
@@ -157,81 +165,71 @@ export default async function MachineDetailPage({
                 machine.id,
                 s.id
               );
+              const statusClass = isOverdue
+                ? "text-[#8b0000]"
+                : isSoon
+                  ? "text-[#cc8a00]"
+                  : "text-soft";
               return (
-                <div
+                <li
                   key={s.id}
-                  className="flex items-center justify-between gap-4 px-5 py-4"
+                  className="rounded-lg bg-cream p-3"
                 >
-                  <div>
-                    <div className="font-medium text-slate-900">{s.name}</div>
-                    <div className="text-xs text-slate-500">
-                      На всеки{" "}
-                      {formatReading(
-                        Number(s.interval_value),
-                        machine.reading_unit
-                      )}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-bold text-text">
+                        {s.name}
+                      </div>
+                      <div className="meta">
+                        Всеки{" "}
+                        {formatReading(
+                          Number(s.interval_value),
+                          machine.reading_unit
+                        )}
+                      </div>
                       {s.last_done_reading != null && (
-                        <>
-                          {" "}
-                          · последно при{" "}
+                        <div className="meta">
+                          Последно при{" "}
                           {formatReading(lastReading, machine.reading_unit)}
                           {s.last_done_date &&
                             ` (${formatDate(s.last_done_date)})`}
-                        </>
+                        </div>
                       )}
                     </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right text-sm">
-                      <div className="font-medium text-slate-900">
-                        На {formatReading(dueAt, machine.reading_unit)}
+                    <div className="shrink-0 text-right text-xs">
+                      <div className="font-bold text-text">
+                        {formatReading(dueAt, machine.reading_unit)}
                       </div>
-                      <div
-                        className={
-                          isOverdue
-                            ? "text-red-600"
-                            : isSoon
-                              ? "text-amber-600"
-                              : "text-slate-500"
-                        }
-                      >
+                      <div className={statusClass}>
                         {isOverdue
-                          ? `Просрочено с ${formatReading(-remaining, machine.reading_unit)}`
-                          : `Остават ${formatReading(remaining, machine.reading_unit)}`}
+                          ? `-${formatReading(-remaining, machine.reading_unit)}`
+                          : `+${formatReading(remaining, machine.reading_unit)}`}
                       </div>
                     </div>
+                  </div>
+                  <div className="mt-2 flex justify-end">
                     <DeleteButton
                       action={deleteScheduleBound}
-                      label="✕"
-                      className="rounded-md px-2 py-1 text-sm text-slate-400 hover:bg-red-50 hover:text-red-600"
+                      label="Изтрий"
+                      className="btn-danger btn-sm"
                       confirmMessage="Да изтрия ли този план?"
                     />
                   </div>
-                </div>
+                </li>
               );
             })}
-          </div>
+          </ul>
         )}
       </section>
 
-      <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-slate-900">
-            История на поддръжката
-          </h2>
-          <Link
-            href={`/machines/${machine.id}/records/new`}
-            className="btn-primary"
-          >
-            + Нов запис
-          </Link>
-        </div>
+      <section className="card">
+        <h3 className="card-title">История на поддръжката</h3>
         {records.length === 0 ? (
-          <div className="card p-5 text-sm text-slate-500">
+          <p className="text-sm text-soft">
             Все още няма записи за поддръжка.
-          </div>
+          </p>
         ) : (
-          <div className="card divide-y divide-slate-100">
+          <ul className="space-y-3">
             {records.map((r) => {
               const deleteRecordBound = deleteRecord.bind(
                 null,
@@ -239,10 +237,13 @@ export default async function MachineDetailPage({
                 r.id
               );
               return (
-                <div key={r.id} className="px-5 py-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
+                <li
+                  key={r.id}
+                  className="rounded-lg border border-bordergray bg-white p-3"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-1.5">
                         <span
                           className={
                             r.service_type === "repair"
@@ -252,11 +253,9 @@ export default async function MachineDetailPage({
                         >
                           {serviceTypeLabel(r.service_type)}
                         </span>
-                        <span className="font-medium text-slate-900">
-                          {r.title}
-                        </span>
+                        <span className="font-bold text-text">{r.title}</span>
                       </div>
-                      <div className="mt-1 text-xs text-slate-500">
+                      <div className="mt-1 text-xs text-soft">
                         {formatDate(r.service_date)} ·{" "}
                         {formatReading(
                           Number(r.reading_at_service),
@@ -265,13 +264,13 @@ export default async function MachineDetailPage({
                         {r.performed_by && ` · ${r.performed_by}`}
                       </div>
                       {r.description && (
-                        <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">
+                        <p className="mt-2 whitespace-pre-wrap text-sm text-text">
                           {r.description}
                         </p>
                       )}
                       {(r.next_service_reading != null ||
                         r.next_service_date) && (
-                        <div className="mt-2 text-xs text-slate-500">
+                        <div className="mt-2 rounded bg-cream px-2 py-1 text-xs text-soft">
                           Следваща:{" "}
                           {r.next_service_reading != null &&
                             formatReading(
@@ -283,27 +282,31 @@ export default async function MachineDetailPage({
                         </div>
                       )}
                       {r.notes && (
-                        <p className="mt-2 text-xs italic text-slate-500">
+                        <p className="mt-2 text-xs italic text-soft">
                           {r.notes}
                         </p>
                       )}
                     </div>
-                    <div className="flex flex-col items-end gap-2 text-right">
-                      <div className="text-sm font-semibold text-slate-900">
-                        {formatMoney(r.cost == null ? null : Number(r.cost))}
+                    <div className="shrink-0 text-right">
+                      <div className="text-sm font-extrabold text-brand">
+                        {formatMoney(
+                          r.cost == null ? null : Number(r.cost)
+                        )}
                       </div>
-                      <DeleteButton
-                        action={deleteRecordBound}
-                        label="✕"
-                        className="rounded-md px-2 py-1 text-xs text-slate-400 hover:bg-red-50 hover:text-red-600"
-                        confirmMessage="Да изтрия ли този запис?"
-                      />
                     </div>
                   </div>
-                </div>
+                  <div className="mt-2 flex justify-end">
+                    <DeleteButton
+                      action={deleteRecordBound}
+                      label="Изтрий"
+                      className="btn-danger btn-sm"
+                      confirmMessage="Да изтрия ли този запис?"
+                    />
+                  </div>
+                </li>
               );
             })}
-          </div>
+          </ul>
         )}
       </section>
     </div>
@@ -318,11 +321,11 @@ function Stat({
   children: React.ReactNode;
 }) {
   return (
-    <div className="card p-5">
-      <div className="text-xs uppercase tracking-wide text-slate-500">
-        {label}
+    <div className="rounded-lg bg-cream p-3">
+      <div className="stat-label">{label}</div>
+      <div className="mt-1 text-sm font-extrabold text-text sm:text-base">
+        {children}
       </div>
-      <div className="mt-1 text-xl font-semibold text-slate-900">{children}</div>
     </div>
   );
 }

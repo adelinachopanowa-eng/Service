@@ -12,12 +12,10 @@ export function RecordForm({ machine, action }: Props) {
   const today = new Date().toISOString().slice(0, 10);
 
   return (
-    <form action={action} className="space-y-6">
-      <div className="card p-6">
-        <h2 className="mb-4 text-base font-semibold text-slate-900">
-          Информация за работата
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-2">
+    <form action={action} className="space-y-4">
+      <div className="card">
+        <h3 className="card-title">Информация за работата</h3>
+        <div className="field-grid">
           <div>
             <label className="label">Дата *</label>
             <input
@@ -58,9 +56,7 @@ export function RecordForm({ machine, action }: Props) {
           </div>
 
           <div>
-            <label className="label">
-              Показание ({unitText}) в момента на работата *
-            </label>
+            <label className="label">Показание ({unitText}) *</label>
             <input
               type="number"
               step="any"
@@ -69,6 +65,7 @@ export function RecordForm({ machine, action }: Props) {
               required
               defaultValue={machine.current_reading}
               className="input"
+              inputMode="decimal"
             />
           </div>
 
@@ -80,10 +77,11 @@ export function RecordForm({ machine, action }: Props) {
               min="0"
               name="cost"
               className="input"
+              inputMode="decimal"
             />
           </div>
 
-          <div>
+          <div className="sm:col-span-2">
             <label className="label">Извършил</label>
             <input
               name="performed_by"
@@ -92,23 +90,20 @@ export function RecordForm({ machine, action }: Props) {
             />
           </div>
 
-          <div />
-
           <div>
-            <label className="label">
-              Следваща поддръжка при показание ({unitText})
-            </label>
+            <label className="label">Следваща при ({unitText})</label>
             <input
               type="number"
               step="any"
               min="0"
               name="next_service_reading"
               className="input"
+              inputMode="decimal"
             />
           </div>
 
           <div>
-            <label className="label">Следваща поддръжка на дата</label>
+            <label className="label">Следваща на дата</label>
             <input type="date" name="next_service_date" className="input" />
           </div>
 
@@ -119,11 +114,9 @@ export function RecordForm({ machine, action }: Props) {
         </div>
       </div>
 
-      <div className="flex justify-end gap-2">
-        <button type="submit" className="btn-primary">
-          Запиши
-        </button>
-      </div>
+      <button type="submit" className="btn-primary btn-full">
+        Запиши работата
+      </button>
     </form>
   );
 }

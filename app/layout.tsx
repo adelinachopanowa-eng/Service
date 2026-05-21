@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Nav } from "@/components/Nav";
 import "./globals.css";
 
@@ -8,6 +8,12 @@ export const metadata: Metadata = {
     "Следене на техническата поддръжка и ремонти на камиони и индустриална техника",
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#1a4a2e",
+};
+
 export default function RootLayout({
   children,
 }: {
@@ -15,9 +21,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="bg">
-      <body className="min-h-screen">
+      <body className="min-h-screen bg-cream">
         <Nav />
-        <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
+        <main className="mx-auto max-w-3xl px-4 py-5 pb-24 sm:py-6">
+          {children}
+        </main>
       </body>
     </html>
   );

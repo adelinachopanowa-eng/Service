@@ -11,12 +11,10 @@ export function ScheduleForm({ machine, action }: Props) {
   const unitText = machine.reading_unit === "km" ? "км" : "мч";
 
   return (
-    <form action={action} className="space-y-6">
-      <div className="card p-6">
-        <h2 className="mb-4 text-base font-semibold text-slate-900">
-          Нов план за периодична поддръжка
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-2">
+    <form action={action} className="space-y-4">
+      <div className="card">
+        <h3 className="card-title">Нов план за периодична поддръжка</h3>
+        <div className="field-grid">
           <div className="sm:col-span-2">
             <label className="label">Име *</label>
             <input
@@ -37,22 +35,24 @@ export function ScheduleForm({ machine, action }: Props) {
               required
               placeholder={machine.reading_unit === "km" ? "10000" : "500"}
               className="input"
+              inputMode="decimal"
             />
           </div>
 
           <div>
-            <label className="label">Последно извършено при ({unitText})</label>
+            <label className="label">Последно при ({unitText})</label>
             <input
               type="number"
               step="any"
               min="0"
               name="last_done_reading"
               className="input"
+              inputMode="decimal"
             />
           </div>
 
-          <div>
-            <label className="label">Последно извършено на дата</label>
+          <div className="sm:col-span-2">
+            <label className="label">Последно на дата</label>
             <input type="date" name="last_done_date" className="input" />
           </div>
 
@@ -63,11 +63,9 @@ export function ScheduleForm({ machine, action }: Props) {
         </div>
       </div>
 
-      <div className="flex justify-end gap-2">
-        <button type="submit" className="btn-primary">
-          Запиши
-        </button>
-      </div>
+      <button type="submit" className="btn-primary btn-full">
+        Запиши план
+      </button>
     </form>
   );
 }

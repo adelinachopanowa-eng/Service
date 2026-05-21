@@ -1,35 +1,62 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+const tabs = [
+  { href: "/", label: "Табло" },
+  { href: "/machines", label: "Машини" },
+  { href: "/machines/new", label: "+ Нова машина" },
+];
 
 export function Nav() {
+  const pathname = usePathname();
+
+  const isActive = (href: string) => {
+    if (href === "/") return pathname === "/";
+    if (href === "/machines") {
+      return pathname === "/machines" || pathname.startsWith("/machines/");
+    }
+    return pathname === href;
+  };
+
   return (
-    <header className="border-b border-slate-200 bg-white">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-        <Link href="/" className="flex items-center gap-2">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand-600 text-white font-bold">
-            T
-          </span>
-          <span className="text-lg font-semibold text-slate-900">
+    <header className="sticky top-0 z-40 bg-brand text-white shadow-topbar">
+      <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 pb-2.5 pt-3.5">
+        <div className="grid h-9 w-9 place-items-center rounded-lg bg-brand-yellow font-extrabold text-brand">
+          П
+        </div>
+        <div className="min-w-0">
+          <h1 className="truncate text-base font-extrabold tracking-tight">
             Сервиз на машини
-          </span>
-        </Link>
-        <nav className="flex items-center gap-2 text-sm">
-          <Link
-            href="/"
-            className="rounded-lg px-3 py-1.5 text-slate-700 hover:bg-slate-100"
-          >
-            Табло
-          </Link>
-          <Link
-            href="/machines"
-            className="rounded-lg px-3 py-1.5 text-slate-700 hover:bg-slate-100"
-          >
-            Машини
-          </Link>
-          <Link href="/machines/new" className="btn-primary">
-            + Нова машина
-          </Link>
-        </nav>
+          </h1>
+          <p className="truncate text-[0.72rem] opacity-70">
+            Камиони и индустриална техника
+          </p>
+        </div>
       </div>
+      <nav
+        className="mx-auto flex max-w-3xl overflow-x-auto border-t border-white/10
+          [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {tabs.map((t) => {
+          const active = isActive(t.href);
+          return (
+            <Link
+              key={t.href}
+              href={t.href}
+              className={
+                "flex-1 whitespace-nowrap border-b-[3px] px-4 py-2.5 text-center text-[0.82rem] font-bold transition " +
+                (active
+                  ? "border-brand-yellow text-brand-yellow"
+                  : "border-transparent text-white/60 hover:text-white")
+              }
+            >
+              {t.label}
+            </Link>
+          );
+        })}
+      </nav>
     </header>
   );
 }

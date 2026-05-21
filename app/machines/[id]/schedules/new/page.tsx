@@ -23,17 +23,17 @@ export default async function NewSchedulePage({
   const action = createSchedule.bind(null, machine.id);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
         <Link
           href={`/machines/${machine.id}`}
-          className="text-sm text-brand-600 hover:underline"
+          className="text-xs font-bold text-brand active:text-brand-light"
         >
-          ← Назад към {machine.name}
+          ← {machine.name}
         </Link>
-        <h1 className="mt-1 text-2xl font-bold text-slate-900">
+        <h2 className="mt-1 text-base font-extrabold text-text">
           Нов план за периодична поддръжка
-        </h1>
+        </h2>
       </div>
       <ScheduleForm machine={machine} action={action} />
     </div>

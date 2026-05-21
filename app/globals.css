@@ -2,61 +2,111 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #f7f8fb;
-  --foreground: #0f172a;
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial,
-    sans-serif;
+  background: theme("colors.cream");
+  color: theme("colors.text");
+  font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+  min-height: 100vh;
+}
+
+/* Avoid iOS zoom on focus */
+input,
+select,
+textarea {
+  font-size: 16px;
 }
 
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition;
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg
+      px-5 py-3 text-sm font-bold transition active:scale-[0.98];
+    -webkit-tap-highlight-color: transparent;
   }
   .btn-primary {
-    @apply btn bg-brand-600 text-white hover:bg-brand-700;
+    @apply btn bg-brand text-white active:bg-brand-light;
   }
-  .btn-secondary {
-    @apply btn bg-slate-200 text-slate-900 hover:bg-slate-300;
+  .btn-yellow {
+    @apply btn bg-brand-yellow text-brand active:bg-brand-yellow-dark;
+  }
+  .btn-outline {
+    @apply btn border-[1.5px] border-bordergray bg-transparent text-soft
+      active:border-brand active:text-brand;
   }
   .btn-danger {
-    @apply btn bg-red-600 text-white hover:bg-red-700;
+    @apply btn bg-[#c0392b] text-white;
   }
+  .btn-sm {
+    @apply min-h-[38px] px-3.5 py-2 text-xs;
+  }
+  .btn-full {
+    @apply w-full;
+  }
+
   .card {
-    @apply rounded-xl bg-white shadow-sm ring-1 ring-slate-200;
+    @apply rounded-card bg-white p-4 shadow-card sm:p-5;
+  }
+  .card-title {
+    @apply mb-3 flex items-center gap-2 border-b-2 border-brand-yellow pb-2
+      text-[0.72rem] font-bold uppercase tracking-wider text-brand;
+  }
+
+  .label {
+    @apply mb-1.5 block text-[0.78rem] font-bold text-soft;
   }
   .input,
   .select,
   .textarea {
-    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm
-      shadow-sm placeholder:text-slate-400 focus:border-brand-500 focus:outline-none
-      focus:ring-2 focus:ring-brand-100;
+    @apply w-full min-h-[44px] rounded-lg border-[1.5px] border-bordergray
+      bg-white px-3 py-2.5 text-base text-text shadow-none
+      placeholder:text-soft/60 focus:border-brand focus:outline-none;
   }
-  .label {
-    @apply mb-1 block text-sm font-medium text-slate-700;
+  .textarea {
+    @apply min-h-[80px] py-2.5;
   }
+
+  .field-grid {
+    @apply grid gap-3 sm:grid-cols-2;
+  }
+
   .badge {
-    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
-  }
-  .badge-blue {
-    @apply badge bg-blue-100 text-blue-800;
-  }
-  .badge-amber {
-    @apply badge bg-amber-100 text-amber-800;
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.72rem] font-bold;
   }
   .badge-green {
-    @apply badge bg-emerald-100 text-emerald-800;
+    @apply badge bg-[#d4edda] text-brand;
+  }
+  .badge-yellow {
+    @apply badge bg-brand-yellow/30 text-brand;
   }
   .badge-red {
-    @apply badge bg-red-100 text-red-800;
+    @apply badge bg-[#fce4e4] text-[#8b0000];
   }
-  .badge-slate {
-    @apply badge bg-slate-100 text-slate-700;
+  .badge-soft {
+    @apply badge bg-cream text-soft;
+  }
+
+  .stat-card {
+    @apply rounded-card bg-white p-4 shadow-card;
+  }
+  .stat-label {
+    @apply text-[0.65rem] font-bold uppercase tracking-wider text-soft;
+  }
+  .stat-value {
+    @apply mt-1 text-xl font-bold text-text sm:text-2xl;
+  }
+
+  .entity-row {
+    @apply flex items-center justify-between gap-3 rounded-lg bg-cream p-3 text-sm;
+  }
+  .entity-row .meta {
+    @apply text-xs text-soft;
+  }
+
+  .list-item {
+    @apply flex items-center justify-between gap-3 p-4 transition active:bg-cream/60;
   }
 }

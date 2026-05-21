@@ -18,12 +18,10 @@ export function MachineForm({ initial, action, submitLabel }: Props) {
   );
 
   return (
-    <form action={action} className="space-y-6">
-      <div className="card p-6">
-        <h2 className="mb-4 text-base font-semibold text-slate-900">
-          Основна информация
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-2">
+    <form action={action} className="space-y-4">
+      <div className="card">
+        <h3 className="card-title">Основна информация</h3>
+        <div className="field-grid">
           <div className="sm:col-span-2">
             <label className="label">Име / Прякор *</label>
             <input
@@ -88,7 +86,7 @@ export function MachineForm({ initial, action, submitLabel }: Props) {
           </div>
 
           <div>
-            <label className="label">Година на производство</label>
+            <label className="label">Година</label>
             <input
               type="number"
               name="year"
@@ -96,21 +94,22 @@ export function MachineForm({ initial, action, submitLabel }: Props) {
               min="1950"
               max="2100"
               className="input"
+              inputMode="numeric"
             />
           </div>
 
           <div>
-            <label className="label">Регистрационен номер</label>
+            <label className="label">Регистрационен №</label>
             <input
               name="registration_number"
               defaultValue={initial?.registration_number ?? ""}
-              placeholder="напр. CA1234AB"
+              placeholder="CA1234AB"
               className="input"
             />
           </div>
 
           <div>
-            <label className="label">Инвентарен номер</label>
+            <label className="label">Инвентарен №</label>
             <input
               name="inventory_number"
               defaultValue={initial?.inventory_number ?? ""}
@@ -120,7 +119,7 @@ export function MachineForm({ initial, action, submitLabel }: Props) {
 
           <div>
             <label className="label">
-              Текущи {readingUnit === "km" ? "километри" : "моточасове"} *
+              Текущи {readingUnit === "km" ? "км" : "моточасове"} *
             </label>
             <input
               type="number"
@@ -130,6 +129,7 @@ export function MachineForm({ initial, action, submitLabel }: Props) {
               required
               defaultValue={initial?.current_reading ?? 0}
               className="input"
+              inputMode="decimal"
             />
           </div>
 
@@ -145,11 +145,9 @@ export function MachineForm({ initial, action, submitLabel }: Props) {
         </div>
       </div>
 
-      <div className="flex justify-end gap-2">
-        <button type="submit" className="btn-primary">
-          {submitLabel}
-        </button>
-      </div>
+      <button type="submit" className="btn-primary btn-full">
+        {submitLabel}
+      </button>
     </form>
   );
 }

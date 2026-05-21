@@ -98,138 +98,128 @@ export default async function DashboardPage() {
   );
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Табло</h1>
-        <p className="mt-1 text-sm text-slate-600">
-          Преглед на всички машини, поддръжка и предстоящи дейности.
-        </p>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-3">
+    <div className="space-y-5">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <StatCard label="Машини" value={machines.length} />
-        <StatCard label="Записи за поддръжка" value={records.length} />
+        <StatCard label="Записи" value={records.length} />
         <StatCard
-          label="Общи разходи"
-          value={`${totalCost.toLocaleString("bg-BG", { maximumFractionDigits: 2 })} лв.`}
+          label="Разходи (лв.)"
+          value={totalCost.toLocaleString("bg-BG", {
+            maximumFractionDigits: 0,
+          })}
         />
       </div>
 
-      <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-slate-900">
-            Предстоящи поддръжки
-          </h2>
-        </div>
+      <section className="card">
+        <h3 className="card-title">Предстоящи поддръжки</h3>
         {due.length === 0 ? (
-          <div className="card p-6 text-sm text-slate-500">
+          <p className="text-sm text-soft">
             Няма предстоящи поддръжки. Добавете план за периодична поддръжка от
             страницата на машината.
-          </div>
+          </p>
         ) : (
-          <div className="card divide-y divide-slate-100">
+          <ul className="space-y-2">
             {due.map((item, idx) => {
               const isOverdue = item.remaining <= 0;
               const isSoon =
                 !isOverdue &&
                 item.remaining <
                   Math.max(Number(item.schedule.interval_value) * 0.1, 500);
+              const statusClass = isOverdue
+                ? "text-[#8b0000]"
+                : isSoon
+                  ? "text-[#cc8a00]"
+                  : "text-soft";
               return (
-                <Link
-                  key={`${item.schedule.id}-${idx}`}
-                  href={`/machines/${item.machine.id}`}
-                  className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-slate-50"
-                >
-                  <div>
-                    <div className="font-medium text-slate-900">
-                      {item.machine.name}
+                <li key={`${item.schedule.id}-${idx}`}>
+                  <Link
+                    href={`/machines/${item.machine.id}`}
+                    className="entity-row active:bg-cream"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-bold text-text">
+                        {item.machine.name}
+                      </div>
+                      <div className="truncate meta">
+                        {machineTypeLabel(item.machine.machine_type)} ·{" "}
+                        {item.schedule.name}
+                      </div>
                     </div>
-                    <div className="text-xs text-slate-500">
-                      {machineTypeLabel(item.machine.machine_type)} ·{" "}
-                      {item.schedule.name}
+                    <div className="shrink-0 text-right text-xs">
+                      <div className="font-bold text-text">
+                        {formatReading(item.dueAt, item.machine.reading_unit)}
+                      </div>
+                      <div className={statusClass}>
+                        {isOverdue
+                          ? `-${formatReading(-item.remaining, item.machine.reading_unit)}`
+                          : `+${formatReading(item.remaining, item.machine.reading_unit)}`}
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-right text-sm">
-                    <div className="font-medium text-slate-900">
-                      На{" "}
-                      {formatReading(item.dueAt, item.machine.reading_unit)}
-                    </div>
-                    <div
-                      className={
-                        isOverdue
-                          ? "text-red-600"
-                          : isSoon
-                            ? "text-amber-600"
-                            : "text-slate-500"
-                      }
-                    >
-                      {isOverdue
-                        ? `Просрочено с ${formatReading(-item.remaining, item.machine.reading_unit)}`
-                        : `Остават ${formatReading(item.remaining, item.machine.reading_unit)}`}
-                    </div>
-                  </div>
-                </Link>
+                  </Link>
+                </li>
               );
             })}
-          </div>
+          </ul>
         )}
       </section>
 
-      <section>
+      <section className="card">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-slate-900">
-            Последни записи
-          </h2>
-          <Link href="/machines" className="text-sm text-brand-600 hover:underline">
-            Всички машини →
+          <h3 className="card-title m-0 border-0 pb-0">Последни записи</h3>
+          <Link
+            href="/machines"
+            className="text-xs font-bold text-brand active:text-brand-light"
+          >
+            Машини →
           </Link>
         </div>
         {recent.length === 0 ? (
-          <div className="card p-6 text-sm text-slate-500">
+          <p className="text-sm text-soft">
             Все още няма записи. Добавете машина и направете първия запис за
             поддръжка.
-          </div>
+          </p>
         ) : (
-          <div className="card divide-y divide-slate-100">
+          <ul className="space-y-2">
             {recent.map((r) => {
               const m = machines.find((m) => m.id === r.machine_id);
               return (
-                <Link
-                  key={r.id}
-                  href={m ? `/machines/${m.id}` : "#"}
-                  className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-slate-50"
-                >
-                  <div className="min-w-0">
-                    <div className="truncate font-medium text-slate-900">
-                      {r.title}
+                <li key={r.id}>
+                  <Link
+                    href={m ? `/machines/${m.id}` : "#"}
+                    className="entity-row active:bg-cream"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className={
+                            r.service_type === "repair"
+                              ? "badge-red"
+                              : "badge-green"
+                          }
+                        >
+                          {serviceTypeLabel(r.service_type)}
+                        </span>
+                        <span className="truncate font-bold text-text">
+                          {r.title}
+                        </span>
+                      </div>
+                      <div className="meta truncate">
+                        {m?.name ?? "—"} · {formatDate(r.service_date)}
+                      </div>
                     </div>
-                    <div className="text-xs text-slate-500">
-                      {m?.name ?? "—"} · {formatDate(r.service_date)}
-                    </div>
-                  </div>
-                  <div className="text-right text-sm">
-                    <span
-                      className={
-                        r.service_type === "repair"
-                          ? "badge-red"
-                          : "badge-green"
-                      }
-                    >
-                      {serviceTypeLabel(r.service_type)}
-                    </span>
                     {m && (
-                      <div className="mt-1 text-xs text-slate-500">
+                      <div className="shrink-0 text-right text-xs text-soft">
                         {formatReading(
                           Number(r.reading_at_service),
                           m.reading_unit
                         )}
                       </div>
                     )}
-                  </div>
-                </Link>
+                  </Link>
+                </li>
               );
             })}
-          </div>
+          </ul>
         )}
       </section>
     </div>
@@ -244,11 +234,9 @@ function StatCard({
   value: string | number;
 }) {
   return (
-    <div className="card p-5">
-      <div className="text-xs uppercase tracking-wide text-slate-500">
-        {label}
-      </div>
-      <div className="mt-1 text-2xl font-semibold text-slate-900">{value}</div>
+    <div className="stat-card">
+      <div className="stat-label">{label}</div>
+      <div className="stat-value">{value}</div>
     </div>
   );
 }

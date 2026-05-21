@@ -13,7 +13,7 @@ export function DeleteButton({
   action,
   confirmMessage = "Сигурни ли сте, че искате да изтриете този запис?",
   label = "Изтрий",
-  className = "btn-danger",
+  className = "btn-danger btn-sm",
 }: Props) {
   const [pending, start] = useTransition();
   return (

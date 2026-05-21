@@ -173,6 +173,62 @@ export async function createRecord(machineId: string, formData: FormData) {
   redirect(`/machines/${machineId}`);
 }
 
+export async function updateRecord(
+  machineId: string,
+  recordId: string,
+  formData: FormData
+) {
+  if (!str(formData, "title")) throw new Error("Заглавието е задължително");
+  if (!str(formData, "service_date"))
+    throw new Error("Датата е задължителна");
+
+  const { data: original, error: fetchError } = await supabase
+    .from("tm_maintenance_records")
+    .select("invoice_photo_paths")
+    .eq("id", recordId)
+    .maybeSingle();
+  if (fetchError) throw new Error(fetchError.message);
+
+  const originalPaths: string[] = original?.invoice_photo_paths ?? [];
+  const keptPaths = formData
+    .getAll("kept_photos")
+    .map((v) => String(v).trim())
+    .filter((v) => v.length > 0);
+  const removedPaths = originalPaths.filter((p) => !keptPaths.includes(p));
+
+  const newPaths = await uploadInvoicePhotos(machineId, formData);
+  const finalPaths = [...keptPaths, ...newPaths];
+
+  const payload = {
+    service_date: str(formData, "service_date"),
+    service_type: str(formData, "service_type"),
+    title: str(formData, "title"),
+    description: strOrNull(formData, "description"),
+    reading_at_service: num(formData, "reading_at_service"),
+    cost: numOrNull(formData, "cost"),
+    performed_by: strOrNull(formData, "performed_by"),
+    next_service_reading: numOrNull(formData, "next_service_reading"),
+    next_service_date: strOrNull(formData, "next_service_date"),
+    notes: strOrNull(formData, "notes"),
+    invoice_photo_paths: finalPaths,
+  };
+
+  const { error } = await supabase
+    .from("tm_maintenance_records")
+    .update(payload)
+    .eq("id", recordId);
+  if (error) {
+    await removeInvoicePhotos(newPaths);
+    throw new Error(error.message);
+  }
+
+  if (removedPaths.length > 0) await removeInvoicePhotos(removedPaths);
+
+  revalidatePath(`/machines/${machineId}`);
+  revalidatePath("/");
+  redirect(`/machines/${machineId}`);
+}
+
 export async function deleteRecord(machineId: string, recordId: string) {
   const { data: existing } = await supabase
     .from("tm_maintenance_records")

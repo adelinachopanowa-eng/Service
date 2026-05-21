@@ -327,7 +327,13 @@ export default async function MachineDetailPage({
                       </div>
                     </div>
                   </div>
-                  <div className="mt-2 flex justify-end">
+                  <div className="mt-2 flex justify-end gap-2">
+                    <Link
+                      href={`/machines/${machine.id}/records/${r.id}/edit`}
+                      className="btn-outline btn-sm"
+                    >
+                      Редактирай
+                    </Link>
                     <DeleteButton
                       action={deleteRecordBound}
                       label="Изтрий"

@@ -7,6 +7,12 @@ interface Props {
   nextPath: string;
 }
 
+function isNextRedirect(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const digest = (err as { digest?: unknown }).digest;
+  return typeof digest === "string" && digest.startsWith("NEXT_REDIRECT");
+}
+
 export function LoginForm({ nextPath }: Props) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,6 +26,7 @@ export function LoginForm({ nextPath }: Props) {
     try {
       await signIn(formData);
     } catch (err) {
+      if (isNextRedirect(err)) throw err;
       const msg = err instanceof Error ? err.message : "Възникна грешка.";
       setError(msg);
       setPending(false);

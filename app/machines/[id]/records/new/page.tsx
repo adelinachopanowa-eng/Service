@@ -17,6 +17,7 @@ export default async function NewRecordPage({
     .from("tm_machines")
     .select("*")
     .eq("id", id)
+    .is("deleted_at", null)
     .maybeSingle();
   if (!data) notFound();
   const machine = data as Machine;

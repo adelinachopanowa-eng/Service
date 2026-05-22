@@ -16,6 +16,7 @@ export interface Machine {
   notes: string | null;
   created_at: string;
   updated_at: string;
+  deleted_at: string | null;
 }
 
 export interface MaintenanceRecord {
@@ -33,6 +34,7 @@ export interface MaintenanceRecord {
   notes: string | null;
   invoice_photo_paths: string[];
   created_at: string;
+  deleted_at: string | null;
 }
 
 export interface MaintenanceSchedule {
@@ -44,4 +46,5 @@ export interface MaintenanceSchedule {
   last_done_date: string | null;
   notes: string | null;
   created_at: string;
+  deleted_at: string | null;
 }

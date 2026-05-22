@@ -9,6 +9,7 @@ export default async function MachinesPage() {
   const { data, error } = await supabase
     .from("tm_machines")
     .select("*")
+    .is("deleted_at", null)
     .order("name");
 
   if (error) {

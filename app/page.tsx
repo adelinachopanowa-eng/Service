@@ -55,6 +55,7 @@ function computeDue(
           last_done_date: last.service_date,
           notes: null,
           created_at: last.created_at,
+          deleted_at: null,
         },
         dueAt: Number(last.next_service_reading),
         remaining,
@@ -71,12 +72,17 @@ export default async function DashboardPage() {
     supabase
       .from("tm_machines")
       .select("*")
+      .is("deleted_at", null)
       .order("created_at", { ascending: false }),
     supabase
       .from("tm_maintenance_records")
       .select("*")
+      .is("deleted_at", null)
       .order("service_date", { ascending: false }),
-    supabase.from("tm_maintenance_schedules").select("*"),
+    supabase
+      .from("tm_maintenance_schedules")
+      .select("*")
+      .is("deleted_at", null),
   ]);
 
   const machines = (machinesRes.data ?? []) as Machine[];
@@ -100,6 +106,11 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-5">
+      <div className="flex items-center justify-end">
+        <a href="/api/export" download className="btn-outline btn-sm">
+          ⬇️ Експорт CSV
+        </a>
+      </div>
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <StatCard label="Машини" value={machines.length} />
         <StatCard label="Записи" value={records.length} />

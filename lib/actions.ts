@@ -133,11 +133,46 @@ export async function updateMachine(id: string, formData: FormData) {
 }
 
 export async function deleteMachine(id: string) {
-  const { error } = await supabase.from("tm_machines").delete().eq("id", id);
+  const { error } = await supabase
+    .from("tm_machines")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/machines");
+  revalidatePath("/trash");
   revalidatePath("/");
   redirect("/machines");
+}
+
+export async function restoreMachine(id: string) {
+  const { error } = await supabase
+    .from("tm_machines")
+    .update({ deleted_at: null })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath("/machines");
+  revalidatePath("/trash");
+  revalidatePath("/");
+}
+
+export async function hardDeleteMachine(id: string) {
+  // Collect photo paths from all records so we can clean up storage
+  const { data: records } = await supabase
+    .from("tm_maintenance_records")
+    .select("invoice_photo_paths")
+    .eq("machine_id", id);
+  const allPhotos = (records ?? [])
+    .flatMap((r) => r.invoice_photo_paths ?? [])
+    .filter((p): p is string => typeof p === "string" && p.length > 0);
+
+  const { error } = await supabase.from("tm_machines").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+
+  if (allPhotos.length > 0) await removeInvoicePhotos(allPhotos);
+
+  revalidatePath("/machines");
+  revalidatePath("/trash");
+  revalidatePath("/");
 }
 
 export async function createRecord(machineId: string, formData: FormData) {
@@ -230,9 +265,31 @@ export async function updateRecord(
 }
 
 export async function deleteRecord(machineId: string, recordId: string) {
+  const { error } = await supabase
+    .from("tm_maintenance_records")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", recordId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/machines/${machineId}`);
+  revalidatePath("/trash");
+  revalidatePath("/");
+}
+
+export async function restoreRecord(machineId: string, recordId: string) {
+  const { error } = await supabase
+    .from("tm_maintenance_records")
+    .update({ deleted_at: null })
+    .eq("id", recordId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/machines/${machineId}`);
+  revalidatePath("/trash");
+  revalidatePath("/");
+}
+
+export async function hardDeleteRecord(recordId: string) {
   const { data: existing } = await supabase
     .from("tm_maintenance_records")
-    .select("invoice_photo_paths")
+    .select("invoice_photo_paths, machine_id")
     .eq("id", recordId)
     .maybeSingle();
 
@@ -244,7 +301,11 @@ export async function deleteRecord(machineId: string, recordId: string) {
 
   await removeInvoicePhotos(existing?.invoice_photo_paths);
 
-  revalidatePath(`/machines/${machineId}`);
+  if (existing?.machine_id) {
+    revalidatePath(`/machines/${existing.machine_id}`);
+  }
+  revalidatePath("/trash");
+  revalidatePath("/");
 }
 
 export async function createSchedule(machineId: string, formData: FormData) {
@@ -272,8 +333,41 @@ export async function createSchedule(machineId: string, formData: FormData) {
 export async function deleteSchedule(machineId: string, scheduleId: string) {
   const { error } = await supabase
     .from("tm_maintenance_schedules")
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq("id", scheduleId);
   if (error) throw new Error(error.message);
   revalidatePath(`/machines/${machineId}`);
+  revalidatePath("/trash");
+  revalidatePath("/");
+}
+
+export async function restoreSchedule(machineId: string, scheduleId: string) {
+  const { error } = await supabase
+    .from("tm_maintenance_schedules")
+    .update({ deleted_at: null })
+    .eq("id", scheduleId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/machines/${machineId}`);
+  revalidatePath("/trash");
+  revalidatePath("/");
+}
+
+export async function hardDeleteSchedule(scheduleId: string) {
+  const { data: existing } = await supabase
+    .from("tm_maintenance_schedules")
+    .select("machine_id")
+    .eq("id", scheduleId)
+    .maybeSingle();
+
+  const { error } = await supabase
+    .from("tm_maintenance_schedules")
+    .delete()
+    .eq("id", scheduleId);
+  if (error) throw new Error(error.message);
+
+  if (existing?.machine_id) {
+    revalidatePath(`/machines/${existing.machine_id}`);
+  }
+  revalidatePath("/trash");
+  revalidatePath("/");
 }

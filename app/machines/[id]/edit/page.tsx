@@ -17,6 +17,7 @@ export default async function EditMachinePage({
     .from("tm_machines")
     .select("*")
     .eq("id", id)
+    .is("deleted_at", null)
     .maybeSingle();
 
   if (!data) notFound();

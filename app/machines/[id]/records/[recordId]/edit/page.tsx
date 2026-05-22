@@ -16,12 +16,18 @@ export default async function EditRecordPage({
   const { id, recordId } = await params;
 
   const [machineRes, recordRes] = await Promise.all([
-    supabase.from("tm_machines").select("*").eq("id", id).maybeSingle(),
+    supabase
+      .from("tm_machines")
+      .select("*")
+      .eq("id", id)
+      .is("deleted_at", null)
+      .maybeSingle(),
     supabase
       .from("tm_maintenance_records")
       .select("*")
       .eq("id", recordId)
       .eq("machine_id", id)
+      .is("deleted_at", null)
       .maybeSingle(),
   ]);
 

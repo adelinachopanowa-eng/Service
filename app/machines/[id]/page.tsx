@@ -32,17 +32,24 @@ export default async function MachineDetailPage({
   const { id } = await params;
 
   const [machineRes, recordsRes, schedulesRes] = await Promise.all([
-    supabase.from("tm_machines").select("*").eq("id", id).maybeSingle(),
+    supabase
+      .from("tm_machines")
+      .select("*")
+      .eq("id", id)
+      .is("deleted_at", null)
+      .maybeSingle(),
     supabase
       .from("tm_maintenance_records")
       .select("*")
       .eq("machine_id", id)
+      .is("deleted_at", null)
       .order("service_date", { ascending: false })
       .order("created_at", { ascending: false }),
     supabase
       .from("tm_maintenance_schedules")
       .select("*")
       .eq("machine_id", id)
+      .is("deleted_at", null)
       .order("created_at"),
   ]);
 
@@ -123,8 +130,8 @@ export default async function MachineDetailPage({
           </Link>
           <DeleteButton
             action={deleteMachineBound}
-            confirmMessage={`Да изтрия ли машината "${machine.name}" и всичките ѝ записи?`}
-            label="Изтрий машината"
+            confirmMessage={`Да преместя ли "${machine.name}" в кошчето? Може да я възстановиш от страница "Кошче".`}
+            label="В кошчето"
           />
         </div>
       </div>
@@ -213,7 +220,7 @@ export default async function MachineDetailPage({
                       action={deleteScheduleBound}
                       label="Изтрий"
                       className="btn-danger btn-sm"
-                      confirmMessage="Да изтрия ли този план?"
+                      confirmMessage="Да преместя ли този план в кошчето?"
                     />
                   </div>
                 </li>
@@ -338,7 +345,7 @@ export default async function MachineDetailPage({
                       action={deleteRecordBound}
                       label="Изтрий"
                       className="btn-danger btn-sm"
-                      confirmMessage="Да изтрия ли този запис?"
+                      confirmMessage="Да преместя ли този запис в кошчето?"
                     />
                   </div>
                 </li>

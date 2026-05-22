@@ -12,6 +12,7 @@ body {
   color: theme("colors.text");
   font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 /* Avoid iOS zoom on focus */
@@ -19,6 +20,19 @@ input,
 select,
 textarea {
   font-size: 16px;
+  max-width: 100%;
+}
+
+/* iOS Safari renders date/time inputs with a built-in min-width that
+   can push them outside their grid cell on small screens. */
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"],
+input[type="month"],
+input[type="week"] {
+  min-width: 0;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 @layer components {
@@ -71,6 +85,9 @@ textarea {
 
   .field-grid {
     @apply grid gap-3 sm:grid-cols-2;
+  }
+  .field-grid > * {
+    @apply min-w-0;
   }
 
   .badge {

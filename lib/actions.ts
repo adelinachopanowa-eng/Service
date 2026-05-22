@@ -2,11 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { supabase, INVOICE_BUCKET } from "./supabase";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { createSupabaseServer } from "./supabase-server";
+import { INVOICE_BUCKET } from "./supabase";
 
 const MAX_INVOICE_SIZE = 8 * 1024 * 1024; // 8 MB per photo
 
 async function uploadInvoicePhotos(
+  supabase: SupabaseClient,
   machineId: string,
   formData: FormData
 ): Promise<string[]> {
@@ -19,11 +22,11 @@ async function uploadInvoicePhotos(
   const uploadedPaths: string[] = [];
   for (const file of files) {
     if (file.size > MAX_INVOICE_SIZE) {
-      await removeInvoicePhotos(uploadedPaths);
+      await removeInvoicePhotos(supabase, uploadedPaths);
       throw new Error(`Снимката "${file.name}" е твърде голяма (макс. 8 MB)`);
     }
     if (!file.type.startsWith("image/")) {
-      await removeInvoicePhotos(uploadedPaths);
+      await removeInvoicePhotos(supabase, uploadedPaths);
       throw new Error(`Файлът "${file.name}" не е снимка`);
     }
     const safeExt = (file.name.split(".").pop() || "jpg")
@@ -37,7 +40,7 @@ async function uploadInvoicePhotos(
       .from(INVOICE_BUCKET)
       .upload(path, file, { contentType: file.type, upsert: false });
     if (error) {
-      await removeInvoicePhotos(uploadedPaths);
+      await removeInvoicePhotos(supabase, uploadedPaths);
       throw new Error(`Качване на снимка: ${error.message}`);
     }
     uploadedPaths.push(path);
@@ -45,7 +48,10 @@ async function uploadInvoicePhotos(
   return uploadedPaths;
 }
 
-async function removeInvoicePhotos(paths: string[] | null | undefined) {
+async function removeInvoicePhotos(
+  supabase: SupabaseClient,
+  paths: string[] | null | undefined
+) {
   if (!paths || paths.length === 0) return;
   await supabase.storage.from(INVOICE_BUCKET).remove(paths);
 }
@@ -77,6 +83,7 @@ function numOrNull(form: FormData, key: string): number | null {
 }
 
 export async function createMachine(formData: FormData) {
+  const supabase = await createSupabaseServer();
   const payload = {
     name: str(formData, "name"),
     brand: strOrNull(formData, "brand"),
@@ -106,6 +113,7 @@ export async function createMachine(formData: FormData) {
 }
 
 export async function updateMachine(id: string, formData: FormData) {
+  const supabase = await createSupabaseServer();
   const payload = {
     name: str(formData, "name"),
     brand: strOrNull(formData, "brand"),
@@ -133,6 +141,7 @@ export async function updateMachine(id: string, formData: FormData) {
 }
 
 export async function deleteMachine(id: string) {
+  const supabase = await createSupabaseServer();
   const { error } = await supabase
     .from("tm_machines")
     .update({ deleted_at: new Date().toISOString() })
@@ -145,6 +154,7 @@ export async function deleteMachine(id: string) {
 }
 
 export async function restoreMachine(id: string) {
+  const supabase = await createSupabaseServer();
   const { error } = await supabase
     .from("tm_machines")
     .update({ deleted_at: null })
@@ -156,7 +166,7 @@ export async function restoreMachine(id: string) {
 }
 
 export async function hardDeleteMachine(id: string) {
-  // Collect photo paths from all records so we can clean up storage
+  const supabase = await createSupabaseServer();
   const { data: records } = await supabase
     .from("tm_maintenance_records")
     .select("invoice_photo_paths")
@@ -168,7 +178,7 @@ export async function hardDeleteMachine(id: string) {
   const { error } = await supabase.from("tm_machines").delete().eq("id", id);
   if (error) throw new Error(error.message);
 
-  if (allPhotos.length > 0) await removeInvoicePhotos(allPhotos);
+  if (allPhotos.length > 0) await removeInvoicePhotos(supabase, allPhotos);
 
   revalidatePath("/machines");
   revalidatePath("/trash");
@@ -180,7 +190,8 @@ export async function createRecord(machineId: string, formData: FormData) {
   if (!str(formData, "service_date"))
     throw new Error("Датата е задължителна");
 
-  const invoicePaths = await uploadInvoicePhotos(machineId, formData);
+  const supabase = await createSupabaseServer();
+  const invoicePaths = await uploadInvoicePhotos(supabase, machineId, formData);
 
   const payload = {
     machine_id: machineId,
@@ -199,7 +210,7 @@ export async function createRecord(machineId: string, formData: FormData) {
 
   const { error } = await supabase.from("tm_maintenance_records").insert(payload);
   if (error) {
-    await removeInvoicePhotos(invoicePaths);
+    await removeInvoicePhotos(supabase, invoicePaths);
     throw new Error(error.message);
   }
 
@@ -217,6 +228,8 @@ export async function updateRecord(
   if (!str(formData, "service_date"))
     throw new Error("Датата е задължителна");
 
+  const supabase = await createSupabaseServer();
+
   const { data: original, error: fetchError } = await supabase
     .from("tm_maintenance_records")
     .select("invoice_photo_paths")
@@ -231,7 +244,7 @@ export async function updateRecord(
     .filter((v) => v.length > 0);
   const removedPaths = originalPaths.filter((p) => !keptPaths.includes(p));
 
-  const newPaths = await uploadInvoicePhotos(machineId, formData);
+  const newPaths = await uploadInvoicePhotos(supabase, machineId, formData);
   const finalPaths = [...keptPaths, ...newPaths];
 
   const payload = {
@@ -253,11 +266,11 @@ export async function updateRecord(
     .update(payload)
     .eq("id", recordId);
   if (error) {
-    await removeInvoicePhotos(newPaths);
+    await removeInvoicePhotos(supabase, newPaths);
     throw new Error(error.message);
   }
 
-  if (removedPaths.length > 0) await removeInvoicePhotos(removedPaths);
+  if (removedPaths.length > 0) await removeInvoicePhotos(supabase, removedPaths);
 
   revalidatePath(`/machines/${machineId}`);
   revalidatePath("/");
@@ -265,6 +278,7 @@ export async function updateRecord(
 }
 
 export async function deleteRecord(machineId: string, recordId: string) {
+  const supabase = await createSupabaseServer();
   const { error } = await supabase
     .from("tm_maintenance_records")
     .update({ deleted_at: new Date().toISOString() })
@@ -276,6 +290,7 @@ export async function deleteRecord(machineId: string, recordId: string) {
 }
 
 export async function restoreRecord(machineId: string, recordId: string) {
+  const supabase = await createSupabaseServer();
   const { error } = await supabase
     .from("tm_maintenance_records")
     .update({ deleted_at: null })
@@ -287,6 +302,7 @@ export async function restoreRecord(machineId: string, recordId: string) {
 }
 
 export async function hardDeleteRecord(recordId: string) {
+  const supabase = await createSupabaseServer();
   const { data: existing } = await supabase
     .from("tm_maintenance_records")
     .select("invoice_photo_paths, machine_id")
@@ -299,7 +315,7 @@ export async function hardDeleteRecord(recordId: string) {
     .eq("id", recordId);
   if (error) throw new Error(error.message);
 
-  await removeInvoicePhotos(existing?.invoice_photo_paths);
+  await removeInvoicePhotos(supabase, existing?.invoice_photo_paths);
 
   if (existing?.machine_id) {
     revalidatePath(`/machines/${existing.machine_id}`);
@@ -309,6 +325,7 @@ export async function hardDeleteRecord(recordId: string) {
 }
 
 export async function createSchedule(machineId: string, formData: FormData) {
+  const supabase = await createSupabaseServer();
   const payload = {
     machine_id: machineId,
     name: str(formData, "name"),
@@ -331,6 +348,7 @@ export async function createSchedule(machineId: string, formData: FormData) {
 }
 
 export async function deleteSchedule(machineId: string, scheduleId: string) {
+  const supabase = await createSupabaseServer();
   const { error } = await supabase
     .from("tm_maintenance_schedules")
     .update({ deleted_at: new Date().toISOString() })
@@ -342,6 +360,7 @@ export async function deleteSchedule(machineId: string, scheduleId: string) {
 }
 
 export async function restoreSchedule(machineId: string, scheduleId: string) {
+  const supabase = await createSupabaseServer();
   const { error } = await supabase
     .from("tm_maintenance_schedules")
     .update({ deleted_at: null })
@@ -353,6 +372,7 @@ export async function restoreSchedule(machineId: string, scheduleId: string) {
 }
 
 export async function hardDeleteSchedule(scheduleId: string) {
+  const supabase = await createSupabaseServer();
   const { data: existing } = await supabase
     .from("tm_maintenance_schedules")
     .select("machine_id")
@@ -370,4 +390,10 @@ export async function hardDeleteSchedule(scheduleId: string) {
   }
   revalidatePath("/trash");
   revalidatePath("/");
+}
+
+export async function signOut() {
+  const supabase = await createSupabaseServer();
+  await supabase.auth.signOut();
+  redirect("/login");
 }

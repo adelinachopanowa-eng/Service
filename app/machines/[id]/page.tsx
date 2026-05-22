@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { supabase, invoicePhotoUrls } from "@/lib/supabase";
+import { invoicePhotoUrls } from "@/lib/supabase";
+import { createSupabaseServer } from "@/lib/supabase-server";
 import { DeleteButton } from "@/components/DeleteButton";
 import {
   deleteMachine,
@@ -30,6 +31,7 @@ export default async function MachineDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const supabase = await createSupabaseServer();
 
   const [machineRes, recordsRes, schedulesRes] = await Promise.all([
     supabase

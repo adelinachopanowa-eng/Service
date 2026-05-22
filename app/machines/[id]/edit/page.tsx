@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { createSupabaseServer } from "@/lib/supabase-server";
 import { MachineForm } from "@/components/MachineForm";
 import { updateMachine } from "@/lib/actions";
 import type { Machine } from "@/lib/types";
@@ -13,6 +13,7 @@ export default async function EditMachinePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const supabase = await createSupabaseServer();
   const { data } = await supabase
     .from("tm_machines")
     .select("*")

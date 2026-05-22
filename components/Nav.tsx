@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTransition } from "react";
+import { signOut } from "@/lib/actions";
 
 const tabs = [
   { href: "/", label: "Табло" },
@@ -13,6 +15,8 @@ const tabs = [
 export function Nav() {
   const pathname = usePathname();
 
+  if (pathname === "/login" || pathname.startsWith("/login/")) return null;
+
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
     if (href === "/machines") {
@@ -21,13 +25,22 @@ export function Nav() {
     return pathname === href;
   };
 
+  return <NavInner isActive={isActive} />;
+}
+
+function NavInner({
+  isActive,
+}: {
+  isActive: (href: string) => boolean;
+}) {
+  const [pending, start] = useTransition();
   return (
     <header className="sticky top-0 z-40 bg-brand text-white shadow-topbar">
       <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 pb-2.5 pt-3.5">
         <div className="grid h-9 w-9 place-items-center rounded-lg bg-brand-yellow font-extrabold text-brand">
           П
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <h1 className="truncate text-base font-extrabold tracking-tight">
             Сервиз на машини
           </h1>
@@ -35,6 +48,16 @@ export function Nav() {
             Камиони и индустриална техника
           </p>
         </div>
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => start(() => signOut())}
+          className="rounded-md border border-white/30 px-2.5 py-1 text-[0.72rem] font-bold text-white/90
+            active:bg-white/10 disabled:opacity-60"
+          aria-label="Изход"
+        >
+          {pending ? "..." : "Изход"}
+        </button>
       </div>
       <nav
         className="mx-auto flex max-w-3xl overflow-x-auto border-t border-white/10

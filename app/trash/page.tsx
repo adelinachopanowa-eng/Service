@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { createSupabaseServer } from "@/lib/supabase-server";
 import { DeleteButton } from "@/components/DeleteButton";
 import { RestoreButton } from "@/components/RestoreButton";
 import {
@@ -26,6 +26,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function TrashPage() {
+  const supabase = await createSupabaseServer();
   const [machinesRes, recordsRes, schedulesRes] = await Promise.all([
     supabase
       .from("tm_machines")

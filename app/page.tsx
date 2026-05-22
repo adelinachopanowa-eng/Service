@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { createSupabaseServer } from "@/lib/supabase-server";
 import type {
   Machine,
   MaintenanceRecord,
@@ -68,6 +68,7 @@ function computeDue(
 }
 
 export default async function DashboardPage() {
+  const supabase = await createSupabaseServer();
   const [machinesRes, recordsRes, schedulesRes] = await Promise.all([
     supabase
       .from("tm_machines")

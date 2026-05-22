@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { createSupabaseServer } from "@/lib/supabase-server";
 import type { Machine } from "@/lib/types";
 import { formatReading, machineTypeLabel } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export default async function MachinesPage() {
+  const supabase = await createSupabaseServer();
   const { data, error } = await supabase
     .from("tm_machines")
     .select("*")

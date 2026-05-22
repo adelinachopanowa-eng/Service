@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { supabase, invoicePhotoUrl } from "@/lib/supabase";
+import { invoicePhotoUrl } from "@/lib/supabase";
+import { createSupabaseServer } from "@/lib/supabase-server";
 import type { Machine, MaintenanceRecord } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -32,6 +33,7 @@ function unitLabel(u: string): string {
 }
 
 export async function GET() {
+  const supabase = await createSupabaseServer();
   const [machinesRes, recordsRes] = await Promise.all([
     supabase
       .from("tm_machines")

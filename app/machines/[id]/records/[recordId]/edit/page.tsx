@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { supabase, invoicePhotoUrls } from "@/lib/supabase";
+import { invoicePhotoUrls } from "@/lib/supabase";
+import { createSupabaseServer } from "@/lib/supabase-server";
 import { RecordForm } from "@/components/RecordForm";
 import { updateRecord } from "@/lib/actions";
 import type { Machine, MaintenanceRecord } from "@/lib/types";
@@ -14,6 +15,7 @@ export default async function EditRecordPage({
   params: Promise<{ id: string; recordId: string }>;
 }) {
   const { id, recordId } = await params;
+  const supabase = await createSupabaseServer();
 
   const [machineRes, recordRes] = await Promise.all([
     supabase

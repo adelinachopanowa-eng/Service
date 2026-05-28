@@ -1,6 +1,15 @@
 export type MachineType = "truck" | "industrial";
 export type ReadingUnit = "km" | "hours";
 export type ServiceType = "repair" | "maintenance" | "parts";
+export type ScheduleCategory =
+  | "greasing"
+  | "engine"
+  | "transmission"
+  | "hydraulics"
+  | "chassis"
+  | "brakes"
+  | "tires"
+  | "other";
 
 export interface Machine {
   id: string;
@@ -42,6 +51,7 @@ export interface MaintenanceSchedule {
   machine_id: string;
   name: string;
   interval_value: number;
+  category: ScheduleCategory;
   last_done_reading: number | null;
   last_done_date: string | null;
   notes: string | null;

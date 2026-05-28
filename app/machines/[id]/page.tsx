@@ -18,8 +18,11 @@ import {
   formatMoney,
   formatReading,
   machineTypeLabel,
+  scheduleCategoryIcon,
+  scheduleCategoryLabel,
   serviceTypeBadgeClass,
   serviceTypeLabel,
+  timeSinceLabel,
   unitLabel,
 } from "@/lib/utils";
 
@@ -187,22 +190,35 @@ export default async function MachineDetailPage({
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <div className="truncate font-bold text-text">
-                        {s.name}
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-base">
+                          {scheduleCategoryIcon(s.category)}
+                        </span>
+                        <span className="truncate font-bold text-text">
+                          {s.name}
+                        </span>
                       </div>
                       <div className="meta">
-                        Всеки{" "}
+                        {scheduleCategoryLabel(s.category)} · на всеки{" "}
                         {formatReading(
                           Number(s.interval_value),
                           machine.reading_unit
                         )}
                       </div>
-                      {s.last_done_reading != null && (
+                      {s.last_done_reading != null ? (
                         <div className="meta">
-                          Последно при{" "}
+                          Последно{" "}
+                          {s.last_done_date && (
+                            <>
+                              {timeSinceLabel(s.last_done_date)} ·{" "}
+                            </>
+                          )}
+                          при{" "}
                           {formatReading(lastReading, machine.reading_unit)}
-                          {s.last_done_date &&
-                            ` (${formatDate(s.last_done_date)})`}
+                        </div>
+                      ) : (
+                        <div className="meta italic">
+                          Все още не е извършвано
                         </div>
                       )}
                     </div>
@@ -217,7 +233,13 @@ export default async function MachineDetailPage({
                       </div>
                     </div>
                   </div>
-                  <div className="mt-2 flex justify-end">
+                  <div className="mt-2 flex justify-end gap-2">
+                    <Link
+                      href={`/machines/${machine.id}/schedules/${s.id}/log`}
+                      className="btn-yellow btn-sm"
+                    >
+                      ✓ Извърших
+                    </Link>
                     <DeleteButton
                       action={deleteScheduleBound}
                       label="Изтрий"

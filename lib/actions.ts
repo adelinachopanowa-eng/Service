@@ -330,6 +330,7 @@ export async function createSchedule(machineId: string, formData: FormData) {
     machine_id: machineId,
     name: str(formData, "name"),
     interval_value: num(formData, "interval_value"),
+    category: str(formData, "category") || "other",
     last_done_reading: numOrNull(formData, "last_done_reading"),
     last_done_date: strOrNull(formData, "last_done_date"),
     notes: strOrNull(formData, "notes"),
@@ -341,6 +342,67 @@ export async function createSchedule(machineId: string, formData: FormData) {
     .from("tm_maintenance_schedules")
     .insert(payload);
   if (error) throw new Error(error.message);
+
+  revalidatePath(`/machines/${machineId}`);
+  revalidatePath("/");
+  redirect(`/machines/${machineId}`);
+}
+
+export async function logSchedulePerformed(
+  machineId: string,
+  scheduleId: string,
+  formData: FormData
+) {
+  const supabase = await createSupabaseServer();
+
+  const { data: schedule, error: scheduleErr } = await supabase
+    .from("tm_maintenance_schedules")
+    .select("name, interval_value")
+    .eq("id", scheduleId)
+    .eq("machine_id", machineId)
+    .maybeSingle();
+  if (scheduleErr) throw new Error(scheduleErr.message);
+  if (!schedule) throw new Error("Планът не е намерен");
+
+  const date =
+    str(formData, "service_date") || new Date().toISOString().slice(0, 10);
+  const reading = num(formData, "reading_at_service");
+  const cost = numOrNull(formData, "cost");
+  const notes = strOrNull(formData, "notes");
+  const performedBy = strOrNull(formData, "performed_by");
+
+  const invoicePaths = await uploadInvoicePhotos(supabase, machineId, formData);
+
+  const nextReading = reading + Number(schedule.interval_value);
+
+  const recordPayload = {
+    machine_id: machineId,
+    service_date: date,
+    service_type: "maintenance",
+    title: schedule.name,
+    description: null,
+    reading_at_service: reading,
+    cost,
+    performed_by: performedBy,
+    next_service_reading: nextReading,
+    next_service_date: null,
+    notes,
+    invoice_photo_paths: invoicePaths,
+  };
+
+  const { error: recErr } = await supabase
+    .from("tm_maintenance_records")
+    .insert(recordPayload);
+  if (recErr) {
+    await removeInvoicePhotos(supabase, invoicePaths);
+    throw new Error(recErr.message);
+  }
+
+  const { error: updErr } = await supabase
+    .from("tm_maintenance_schedules")
+    .update({ last_done_reading: reading, last_done_date: date })
+    .eq("id", scheduleId);
+  if (updErr) throw new Error(updErr.message);
 
   revalidatePath(`/machines/${machineId}`);
   revalidatePath("/");

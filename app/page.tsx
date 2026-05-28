@@ -51,6 +51,7 @@ function computeDue(
           machine_id: machine.id,
           name: last.title,
           interval_value: 0,
+          category: "other",
           last_done_reading: Number(last.reading_at_service),
           last_done_date: last.service_date,
           notes: null,

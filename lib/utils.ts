@@ -31,6 +31,18 @@ export function machineTypeLabel(type: "truck" | "industrial"): string {
   return type === "truck" ? "Камион" : "Индустриална техника";
 }
 
+export function defectSeverityLabel(s: "low" | "medium" | "high"): string {
+  if (s === "high") return "Висока";
+  if (s === "low") return "Ниска";
+  return "Средна";
+}
+
+export function defectSeverityBadgeClass(s: "low" | "medium" | "high"): string {
+  if (s === "high") return "badge-red";
+  if (s === "low") return "badge-soft";
+  return "badge-yellow";
+}
+
 export function unitLabel(unit: "km" | "hours"): string {
   return unit === "km" ? "Километри" : "Моточасове";
 }

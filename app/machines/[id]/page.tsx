@@ -156,6 +156,16 @@ export default async function MachineDetailPage({
         </Link>
       </div>
 
+      <Link
+        href={`/greasing/${machine.id}`}
+        className="card flex items-center justify-between gap-2 active:bg-cream/60"
+      >
+        <span className="flex items-center gap-2 font-bold text-text">
+          🛢️ Гресиране на машината
+        </span>
+        <span className="text-brand">→</span>
+      </Link>
+
       <section className="card">
         <h3 className="card-title">Планове за периодична поддръжка</h3>
         {schedules.length === 0 ? (

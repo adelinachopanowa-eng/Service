@@ -8,6 +8,7 @@ import { signOut } from "@/lib/actions";
 const tabs = [
   { href: "/", label: "Табло" },
   { href: "/machines", label: "Машини" },
+  { href: "/greasing", label: "Гресиране" },
   { href: "/machines/new", label: "+ Нова" },
   { href: "/trash", label: "Кошче" },
 ];
@@ -22,6 +23,7 @@ export function Nav() {
     if (href === "/machines") {
       return pathname === "/machines" || pathname.startsWith("/machines/");
     }
+    if (href === "/greasing") return pathname.startsWith("/greasing");
     return pathname === href;
   };
 

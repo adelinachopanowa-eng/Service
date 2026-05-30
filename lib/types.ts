@@ -58,3 +58,47 @@ export interface MaintenanceSchedule {
   created_at: string;
   deleted_at: string | null;
 }
+
+export type GreaseScope = "full" | "partial";
+export type DefectSeverity = "low" | "medium" | "high";
+export type DefectStatus = "open" | "resolved";
+
+export interface GreasePoint {
+  id: string;
+  machine_id: string;
+  name: string;
+  sort_order: number;
+  created_at: string;
+  deleted_at: string | null;
+}
+
+export interface GreaseEvent {
+  id: string;
+  machine_id: string;
+  event_date: string;
+  reading: number;
+  scope: GreaseScope;
+  point_ids: string[];
+  point_names: string[];
+  performed_by: string | null;
+  notes: string | null;
+  invoice_photo_paths: string[];
+  created_at: string;
+  deleted_at: string | null;
+}
+
+export interface GreaseDefect {
+  id: string;
+  machine_id: string;
+  point_id: string | null;
+  point_name: string | null;
+  description: string;
+  severity: DefectSeverity;
+  status: DefectStatus;
+  reported_date: string;
+  reading: number | null;
+  resolved_date: string | null;
+  resolution_note: string | null;
+  created_at: string;
+  deleted_at: string | null;
+}

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import type { Machine } from "@/lib/types";
-import { formatReading, machineTypeLabel } from "@/lib/utils";
+import { formatReading } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -56,25 +56,14 @@ export default async function MachinesPage() {
           {machines.map((m) => (
             <li key={m.id}>
               <Link href={`/machines/${m.id}`} className="card block">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="truncate font-extrabold text-text">
-                      {m.name}
-                    </div>
-                    <div className="truncate text-xs text-soft">
-                      {[m.brand, m.model].filter(Boolean).join(" ") || "—"}
-                      {m.registration_number && ` · ${m.registration_number}`}
-                    </div>
+                <div className="min-w-0">
+                  <div className="truncate font-extrabold text-text">
+                    {m.name}
                   </div>
-                  <span
-                    className={
-                      m.machine_type === "truck"
-                        ? "badge-green shrink-0"
-                        : "badge-yellow shrink-0"
-                    }
-                  >
-                    {machineTypeLabel(m.machine_type)}
-                  </span>
+                  <div className="truncate text-xs text-soft">
+                    {[m.brand, m.model].filter(Boolean).join(" ") || "—"}
+                    {m.registration_number && ` · ${m.registration_number}`}
+                  </div>
                 </div>
                 <div className="mt-3 flex items-baseline gap-2 border-t border-bordergray pt-3">
                   <span className="stat-label">Показание</span>

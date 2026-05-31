@@ -6,6 +6,20 @@ export const metadata: Metadata = {
   title: "Сервиз на машини",
   description:
     "Следене на техническата поддръжка и ремонти на камиони и индустриална техника",
+  // Disable iOS Safari's automatic detection of phone numbers, dates and
+  // addresses which inserts styled (often green) tappable links into the
+  // page content.
+  formatDetection: {
+    telephone: false,
+    date: false,
+    address: false,
+    email: false,
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Сервиз",
+  },
 };
 
 export const viewport: Viewport = {
